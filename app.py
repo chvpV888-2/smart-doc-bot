@@ -39,20 +39,31 @@ def get_vector_store(text_chunks):
 
 # --- THE FIX: SWITCHING TO GROQ ---
 def get_conversational_chain():
+    # We added strict instructions to NOT generate extra questions.
     prompt_template = """
-    Answer the question as detailed as possible from the provided context. If the answer is not in
-    provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
-    Context:\n {context}?\n
-    Question: \n{question}\n
+    You are a helpful assistant. Answer the user's question strictly using the provided context. 
+    
+    Rules:
+    1. If the answer is in the context, give a concise and clear answer.
+    2. If the answer is NOT in the context, say "The answer is not available in the context."
+    3. DO NOT generate follow-up questions, quizzes, or additional lists.
+    4. Provide the answer and then END your response.
+
+    Context:
+    {context}
+
+    Question: 
+    {question}
 
     Answer:
     """
-    # Llama 3 on Groq is super stable and fast
+    
     model = ChatGroq(
-    groq_api_key=groq_api_key,
-    model_name="llama-3.3-70b-versatile", 
-    temperature=0.3
-   )
+        groq_api_key=groq_api_key,
+        model_name="llama-3.3-70b-versatile",
+        temperature=0.1  # Lower temperature makes the AI less "creative" and more focused.
+    )
+    
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
     return chain
